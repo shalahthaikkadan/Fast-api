@@ -3,18 +3,23 @@ from pydantic import BaseModel
 
 app = FastAPI()
 
-movies = []
+
+# Temporary storage
+movies = [
+    {"id": 1, "name": "Inception", "rating": 9},
+    {"id": 2, "name": "Interstellar", "rating": 10}
+]
 
 
-# Movie data
+# Data model
 class Movie(BaseModel):
     name: str
     rating: int
 
 
-# Add movie
-@app.post("/addmovie")
-def add_movie(movie: Movie):
+# CREATE
+@app.post("/movies")
+def create_movie(movie: Movie):
 
     # Check rating
     if movie.rating < 1 or movie.rating > 10:
@@ -23,70 +28,80 @@ def add_movie(movie: Movie):
             detail="Rating must be between 1 and 10"
         )
 
-    movies.append(movie)
+    new_id = len(movies) + 1
 
-    return {
-        "message": "Movie added successfully",
-        "movie": movie
+    new_movie = {
+        "id": new_id,
+        "name": movie.name,
+        "rating": movie.rating
     }
 
+    movies.append(new_movie)
 
-# Get all movies
-@app.get("/getmovies")
+    return new_movie
+
+
+# READ - Get all movies
+@app.get("/movies")
 def get_movies():
-    return {
-        "movies": movies
-    }
+    return movies
 
 
-# Update movie
-@app.put("/updatemovie/{index}")
-def update_movie(index: int, movie: Movie):
+# READ - Get movie by ID
+@app.get("/movies/{movie_id}")
+def get_movie(movie_id: int):
 
-    if index < 0 or index >= len(movies):
-        raise HTTPException(
-            status_code=404,
-            detail="Movie not found"
-        )
+    for movie in movies:
 
-    # Check rating
+        if movie["id"] == movie_id:
+            return movie
+
+    raise HTTPException(
+        status_code=404,
+        detail="Movie not found"
+    )
+
+
+# UPDATE
+@app.put("/movies/{movie_id}")
+def update_movie(movie_id: int, movie: Movie):
+
     if movie.rating < 1 or movie.rating > 10:
         raise HTTPException(
             status_code=400,
             detail="Rating must be between 1 and 10"
         )
 
-    movies[index] = movie
+    for existing_movie in movies:
 
-    return {
-        "message": "Movie updated successfully",
-        "movie": movie
-    }
+        if existing_movie["id"] == movie_id:
 
+            existing_movie["name"] = movie.name
+            existing_movie["rating"] = movie.rating
 
-# Delete movie
-@app.delete("/deletemovie/{index}")
-def delete_movie(index: int):
+            return existing_movie
 
-    if index < 0 or index >= len(movies):
-        raise HTTPException(
-            status_code=404,
-            detail="Movie not found"
-        )
-
-    deleted_movie = movies.pop(index)
-
-    return {
-        "message": "Movie deleted successfully",
-        "movie": deleted_movie
-    }
+    raise HTTPException(
+        status_code=404,
+        detail="Movie not found"
+    )
 
 
-# JSON format for adding a movie:
-#
-# {
-#     "name": "Inception",
-#     "rating": 9
-# }
-#
-# Rating must be between 1 and 10.
+# DELETE
+@app.delete("/movies/{movie_id}")
+def delete_movie(movie_id: int):
+
+    for movie in movies:
+
+        if movie["id"] == movie_id:
+
+            movies.remove(movie)
+
+            return {
+                "message": "Movie deleted successfully"
+            }
+
+    raise HTTPException(
+        status_code=404,
+        detail="Movie not found"
+    )
