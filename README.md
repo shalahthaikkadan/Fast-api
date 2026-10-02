@@ -76,8 +76,4 @@ APIs can be tested using:
 
 This repository contains my **FastAPI learning journey, practice questions, and API development exercises**.
 
-## 👨‍💻 Author
 
-**Shalah**
-
-GitHub: https://github.com/shalahthaikkadan
